@@ -1,0 +1,4 @@
+**/*.o
+**/*.d
+cppcheck-lsp
+test-cppcheck-lsp

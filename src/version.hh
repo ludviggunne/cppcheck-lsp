@@ -1,0 +1,6 @@
+#ifndef VERSION_HH_INCLUDED
+#define VERSION_HH_INCLUDED
+
+#define CPPCHECK_LSP_VERSION "0.1.0"
+
+#endif
