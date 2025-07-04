@@ -1,6 +1,6 @@
 PREFIX=.
-override CXXFLAGS+=-MMD -Isrc -Iexternal -Wno-builtin-declaration-mismatch
-override LDFLAGS+=
+override CXXFLAGS:=-MMD -Isrc -Iexternal -O3 $(CXXFLAGS)
+override LDFLAGS:=-flto $(LDFLAGS)
 
 common_sources=src/transport.cc \
                src/json-rpc.cc \
@@ -49,3 +49,4 @@ install:
 	install -Dm755 cppcheck-lsp $(PREFIX)/bin/cppcheck-lsp
 
 .PHONY: clean install
+.DEFAULT_GOAL=cppcheck-lsp
