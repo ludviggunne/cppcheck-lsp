@@ -4,7 +4,7 @@
 static void error_message_parse()
 {
   cppcheck::ErrorMessage message;
-  std::string line = "some-file.c|12|13|warning|this is a message with a pipe character: | <- there it is";
+  std::string line = "some-file.c\t12\t13\twarning\tthis is a message\tcode_with_tab();\t// comment";
 
   EXPECT(message.parse(line), "Parsing failed");
   EXPECT_EQUAL(message.file.c_str(), "some-file.c");
@@ -12,7 +12,8 @@ static void error_message_parse()
   EXPECT_EQUAL(message.column, 12);
   EXPECT_EQUAL(message.severity.c_str(), "warning");
   EXPECT_EQUAL(static_cast<int>(message.lsp_severity), static_cast<int>(lsp::Severity::Warning));
-  EXPECT_EQUAL(message.message.c_str(), "this is a message with a pipe character: | <- there it is");
+  EXPECT_EQUAL(message.message.c_str(), "this is a message");
+  EXPECT_EQUAL(message.code.c_str(), "code_with_tab();\t// comment");
 }
 
 static void command_argv()
@@ -22,7 +23,7 @@ static void command_argv()
   const char *expected_array[] = {
     "cppcheck",
     "-q",
-    "--template='{file}|{line}|{column}|{severity}|{message}'",
+    "--template='{file}\t{line}\t{column}\t{severity}\t{message}\t{code}'",
     "file.c",
     nullptr,
   };

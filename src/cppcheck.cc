@@ -1,3 +1,6 @@
+#include <cctype>
+#include <cstring>
+
 #include "cppcheck.hh"
 
 const char **cppcheck::Config::argv(const std::string &file)
@@ -24,7 +27,79 @@ const char **cppcheck::Config::argv(const std::string &file)
 
 const char *cppcheck::ErrorMessage::error_template()
 {
-  return "{file}|{line}|{column}|{severity}|{message}";
+  return "{file}\t{line}\t{column}\t{severity}\t{message}\t{code}";
+}
+
+static unsigned int get_identifier_length(std::string_view code)
+{
+  unsigned int pos = 0;
+
+  while (pos < code.size() && std::isalnum(code[pos]))
+    pos++;
+
+  return pos;
+}
+
+static unsigned int get_numeric_length(std::string_view code)
+{
+  unsigned int pos = 0;
+
+  while (pos < code.size() && (std::isdigit(code[pos]) || std::strchr(".box", code[pos])))
+    pos++;
+
+  return pos;
+}
+
+static unsigned int get_string_length(std::string_view code)
+{
+  const char c = code[0];
+  unsigned int pos = 1;
+
+  while (pos < code.size() && code[pos] != c)
+    pos++;
+
+  if (pos == code.size())
+    return pos;
+
+  return pos + 1;
+}
+
+static unsigned int get_operator_length(std::string_view code)
+{
+  static const std::string_view ops[] = {
+    /* Must be in order of descending length */
+    ">>=", "<<=", "<=>", "->*",
+    "::", "++", "--", ".*",
+    "<<", ">>", "<=", ">=",
+    "==", "!=", "&&", "||",
+    "+=", "-=", "*=", "/=",
+    "%=", "&=", "^=", "|=",
+  };
+
+  for (const auto &op : ops) {
+    if (code.substr(0, op.size()) == op)
+      return op.size();
+  }
+
+  return 1;
+}
+
+static unsigned int get_token_length(std::string_view code, unsigned int column)
+{
+  code = code.substr(column);
+
+  const char c = code[0];
+
+  if (std::isalpha(c))
+    return get_identifier_length(code);
+
+  if (std::isdigit(c))
+    return get_numeric_length(code);
+
+  if (std::strchr("'\"", c))
+    return get_string_length(code);
+
+  return get_operator_length(code);
 }
 
 bool cppcheck::ErrorMessage::parse(std::string message_line)
@@ -33,19 +108,19 @@ bool cppcheck::ErrorMessage::parse(std::string message_line)
   std::string::size_type pos;
 
   /* Tokenize */
-  while ((pos = message_line.find("|")) != std::string::npos) {
+  while ((pos = message_line.find("\t")) != std::string::npos) {
     components.push_back(message_line.substr(0, pos));
     message_line = message_line.substr(pos + 1);
 
-    /* Reached message string */
-    if (components.size() == 4)
+    /* Reached code */
+    if (components.size() == 5)
       break;
   }
 
-  /* Add message */
+  /* Add code */
   components.push_back(message_line);
 
-  if (components.size() != 5) {
+  if (components.size() != 6) {
     return false;
   }
 
@@ -85,6 +160,9 @@ bool cppcheck::ErrorMessage::parse(std::string message_line)
   }
 
   message = components[4];
+  code = components[5];
+
+  token_length = get_token_length(code, column);
 
   return true;
 }
@@ -96,7 +174,7 @@ picojson::value cppcheck::ErrorMessage::into_lsp_diagnostic() const
   start["character"] = picojson::value(static_cast<double>(column));
 
   end["line"] = picojson::value(static_cast<double>(line));
-  end["character"] = picojson::value(static_cast<double>(column + 1));
+  end["character"] = picojson::value(static_cast<double>(column + token_length));
 
   picojson::object range;
   range["start"] = picojson::value(std::move(start));

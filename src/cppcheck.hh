@@ -24,9 +24,11 @@ namespace cppcheck {
     std::string file;
     unsigned int line;
     unsigned int column;
+    unsigned int token_length;
     std::string severity;
     lsp::Severity lsp_severity;
     std::string message;
+    std::string code;
 
     static const char *error_template();
     bool parse(std::string message_line);
