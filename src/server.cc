@@ -119,7 +119,7 @@ static picojson::value get_server_capabilities()
 
   /* Disable document sync, cppcheck reads from disk */
   capabilities["textDocumentSync"] = picojson::value(0.0);
- 
+
   return picojson::value(std::move(capabilities));
 }
 

@@ -16,4 +16,3 @@ static void send_recv()
 
 SET_TEST_NAMESPACE(transport);
 REGISTER_TEST(send_recv);
-

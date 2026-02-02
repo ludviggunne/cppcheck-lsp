@@ -69,4 +69,3 @@ void log_::debug(const char *fmt, ...)
   log_impl("[debug]: ", fmt, ap);
   va_end(ap);
 }
-

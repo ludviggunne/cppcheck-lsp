@@ -187,4 +187,3 @@ picojson::value cppcheck::ErrorMessage::into_lsp_diagnostic() const
 
   return picojson::value(std::move(diagnostic));
 }
-

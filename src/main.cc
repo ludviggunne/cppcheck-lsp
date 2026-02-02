@@ -17,7 +17,7 @@ int main(int argc, char **argv)
     options.parse_cli(argc, argv);
 
     log_::enable(options.loglevel);
-   
+
     if (!options.logfile.empty()) {
       log_::set_file(options.logfile);
     }
